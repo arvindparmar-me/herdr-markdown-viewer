@@ -35,6 +35,22 @@ json_get_sed() {
   sed -n 's/.*"'"$1"'"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1
 }
 
+# extract_pane_id RESPONSE_JSON — print pane_id from a plugin pane open
+# response. Best-effort; returns nothing on parse failure.
+extract_pane_id() {
+  if ! command -v python3 >/dev/null 2>&1; then
+    return
+  fi
+  python3 -c '
+import json, sys
+try:
+    data = json.loads(sys.stdin.read())
+    print(data["result"]["plugin_pane"]["pane"]["pane_id"])
+except (KeyError, ValueError, TypeError):
+    pass
+' <<< "$1"
+}
+
 # --- selection cleanup -----------------------------------------------------
 
 # sanitize_selection TEXT — first line, trimmed, one layer of matching
@@ -147,7 +163,22 @@ main() {
   fi
   args+=(--env "MD_PATH=$abs" --focus)
 
-  "$herdr_bin" "${args[@]}"
+  local output open_status
+  output="$("$herdr_bin" "${args[@]}" 2>&1)"
+  open_status=$?
+
+  if [[ $open_status -ne 0 ]]; then
+    printf '%s\n' "$output" >&2
+    return "$open_status"
+  fi
+
+  # Rename the new pane to the filename (best-effort; pane already opened).
+  local pane_id_from_output base
+  pane_id_from_output="$(extract_pane_id "$output")"
+  if [[ -n "$pane_id_from_output" ]]; then
+    base="$(basename "$abs")"
+    "$herdr_bin" pane rename "$pane_id_from_output" "$base" >/dev/null 2>&1 || true
+  fi
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

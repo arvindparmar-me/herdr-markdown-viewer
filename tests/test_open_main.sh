@@ -6,10 +6,18 @@ source tests/assert.sh
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
-# Stub herdr binary: records argv, one arg per line, to $HERDR_STUB_LOG.
+# Stub herdr binary: appends each invocation's argv (one arg per line,
+# calls separated by ---) to $HERDR_STUB_LOG. Returns a mock pane open
+# response when the pane open command is detected.
 cat > "$tmp/herdr" <<'EOF'
 #!/usr/bin/env bash
-printf '%s\n' "$@" > "$HERDR_STUB_LOG"
+{
+  printf '%s\n' "$@"
+  printf -- '---\n'
+} >> "$HERDR_STUB_LOG"
+if [[ "$1" == "plugin" && "$2" == "pane" && "$3" == "open" ]]; then
+  printf '{"id":"test","result":{"plugin_pane":{"plugin_id":"herdr.markdown-viewer","entrypoint":"preview","pane":{"pane_id":"w1:p99","workspace_id":"w1","tab_id":"w1:t1","title":"Markdown preview"}}}}'
+fi
 EOF
 chmod +x "$tmp/herdr"
 export HERDR_STUB_LOG="$tmp/argv.log"
@@ -47,7 +55,11 @@ w1:p1
 --env
 MD_PATH=$tmp/proj/docs/guide.md
 --focus"
-assert_eq "$expected" "$(cat "$HERDR_STUB_LOG")" "herdr argv with target pane"
+assert_eq "$expected" "$(sed -n '1,/---/p' "$HERDR_STUB_LOG" | sed '$d')" "herdr argv with target pane"
+assert_eq "pane
+rename
+w1:p99
+guide.md" "$(sed -n '/---/,$p' "$HERDR_STUB_LOG" | sed '1d' | sed '$d')" "pane renamed to filename"
 
 # --- happy path without pane id (null) ---
 : > "$HERDR_STUB_LOG"
