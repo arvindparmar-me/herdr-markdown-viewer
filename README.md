@@ -10,7 +10,7 @@ with [glow](https://github.com/charmbracelet/glow) when installed, plain
 - herdr >= 0.7.4
 - bash (macOS `/bin/bash` 3.2 is fine)
 - optional: `glow` for rendered markdown (`brew install glow`)
-- optional: `python3` for more robust context JSON parsing
+- optional: `python3` for context JSON parsing and pane rename support
 
 ## Install
 
@@ -20,7 +20,7 @@ From this directory:
 herdr plugin link "$PWD"
 ```
 
-Or install from GitHub once published:
+Or install from GitHub:
 
 ```sh
 herdr plugin install arvindk-me/herdr-markdown-viewer
@@ -44,8 +44,9 @@ Then run `herdr server reload-config` (or restart herdr).
 ## Usage
 
 1. Drag-select a markdown path in any pane (absolute, relative to the pane's
-   working directory, or starting with `~`). Herdr copies the selection and
-   keeps it visible.
+   working directory, or starting with `~`). Herdr copies the path to the
+   clipboard, but clears the visible selection — the plugin reads the
+   clipboard as a fallback.
 2. Press `prefix+m`.
 3. The preview opens in a right split. With glow, press `q` to close;
    without glow, press Enter.
@@ -73,8 +74,8 @@ a pane.
 ## Uninstall
 
 ```sh
-herdr plugin unlink herdr.markdown-viewer   # keeps this directory
-# or: herdr plugin uninstall herdr.markdown-viewer
+herdr plugin unlink herdr.markdown-viewer     # if linked locally (keeps files)
+herdr plugin uninstall herdr.markdown-viewer  # if installed from GitHub (removes checkout)
 ```
 
 ## Development
