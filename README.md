@@ -23,7 +23,7 @@ herdr plugin link "$PWD"
 Or install from GitHub once published:
 
 ```sh
-herdr plugin install <owner>/herdr-markdown-viewer
+herdr plugin install arvindk-me/herdr-markdown-viewer
 ```
 
 ## Keybinding (required)
