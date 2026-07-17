@@ -63,6 +63,9 @@ a pane.
 
 - Nothing happens on `prefix+m`: check the keybinding block and
   `herdr server reload-config`.
+- If an unexpected file opens: herdr clears the selection after
+  drag-copying, so the plugin falls back to the system clipboard.
+  Make sure you drag-select a path immediately before the keybinding.
 - See action errors: `herdr plugin log list --plugin herdr.markdown-viewer`.
 - Verify registration: `herdr plugin list`, then
   `herdr plugin action list --plugin herdr.markdown-viewer`.
