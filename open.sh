@@ -91,3 +91,52 @@ validate_markdown_path() {
       ;;
   esac
 }
+
+# --- main ------------------------------------------------------------------
+
+main() {
+  local context="${HERDR_PLUGIN_CONTEXT_JSON:-}"
+  local selected cwd pane_id raw abs
+  selected="$(json_get selected_text <<< "$context")"
+  cwd="$(json_get focused_pane_cwd <<< "$context")"
+  pane_id="$(json_get focused_pane_id <<< "$context")"
+
+  if [[ -z "$selected" ]]; then
+    echo "md-preview: no selection; drag-select a markdown file path, then run this action" >&2
+    return 1
+  fi
+
+  raw="$(sanitize_selection "$selected")"
+  if [[ -z "$raw" ]]; then
+    echo "md-preview: selection is empty after cleanup" >&2
+    return 1
+  fi
+
+  if [[ "$raw" != /* && "$raw" != "~" && "$raw" != "~"/* && -z "$cwd" ]]; then
+    echo "md-preview: cannot resolve relative path without the focused pane's cwd: $raw" >&2
+    return 1
+  fi
+
+  abs="$(resolve_path "$raw" "$cwd")"
+  if ! validate_markdown_path "$abs"; then
+    return 1
+  fi
+
+  local herdr_bin="${HERDR_BIN_PATH:-herdr}"
+  local args=(plugin pane open
+    --plugin herdr.markdown-viewer
+    --entrypoint preview
+    --placement split
+    --direction right)
+  if [[ -n "$pane_id" ]]; then
+    args+=(--target-pane "$pane_id")
+  fi
+  args+=(--env "MD_PATH=$abs" --focus)
+
+  "$herdr_bin" "${args[@]}"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  set -u
+  main "$@"
+fi
