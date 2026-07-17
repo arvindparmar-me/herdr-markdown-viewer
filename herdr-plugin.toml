@@ -1,0 +1,17 @@
+id = "herdr.markdown-viewer"
+name = "Markdown Viewer"
+version = "0.1.0"
+min_herdr_version = "0.7.4"
+description = "Preview a selected markdown file path in a right-split pane."
+platforms = ["linux", "macos"]
+
+[[actions]]
+id = "preview"
+title = "Preview markdown file"
+command = ["bash", "open.sh"]
+
+[[panes]]
+id = "preview"
+title = "Markdown preview"
+placement = "split"
+command = ["bash", "preview.sh"]
