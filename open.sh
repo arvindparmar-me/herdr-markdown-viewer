@@ -102,6 +102,20 @@ main() {
   pane_id="$(json_get focused_pane_id <<< "$context")"
 
   if [[ -z "$selected" ]]; then
+    # Fall back to clipboard — herdr's default copy_on_select clears the
+    # selection after copying, so selected_text is often unavailable at
+    # keybinding time. The clipboard still holds the copied text.
+    # Set MD_PREVIEW_NO_CLIPBOARD=1 to skip this fallback (for testing).
+    if [[ "${MD_PREVIEW_NO_CLIPBOARD:-0}" != "1" ]]; then
+      if command -v pbpaste >/dev/null 2>&1; then
+        selected="$(pbpaste | head -n 1)"
+      elif command -v xclip >/dev/null 2>&1; then
+        selected="$(xclip -o -selection clipboard 2>/dev/null | head -n 1)"
+      fi
+      selected="${selected:+$selected}"
+    fi
+  fi
+  if [[ -z "$selected" ]]; then
     echo "md-preview: no selection; drag-select a markdown file path, then run this action" >&2
     return 1
   fi

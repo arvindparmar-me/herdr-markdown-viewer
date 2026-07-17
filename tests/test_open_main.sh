@@ -14,6 +14,7 @@ EOF
 chmod +x "$tmp/herdr"
 export HERDR_STUB_LOG="$tmp/argv.log"
 export HERDR_BIN_PATH="$tmp/herdr"
+export MD_PREVIEW_NO_CLIPBOARD=1  # tests check selected_text from context, not clipboard
 
 mkdir -p "$tmp/proj/docs"
 printf '# Hello\n' > "$tmp/proj/docs/guide.md"
